@@ -28,7 +28,41 @@ def splitData(data):
     return training_list
 
 
+def getAllDataFileName(type=DataType.train):
+    from os import listdir
+    from os.path import isfile, join
+    if type == DataType.test:
+        DATA_PATH = 'test/'
+    else:
+        DATA_PATH = 'data/'
+    onlyfiles = [f for f in listdir(DATA_PATH) if isfile(join(DATA_PATH, f))]
+    names = []
+    for file in onlyfiles:
+        names.append(file.split(".")[0])
+    return names
+
+
 def getData(gesture='wrong', type=DataType.train):
     raw_gesture_data = readGesture(gesture, type=DataType.train)
     return splitData(raw_gesture_data)
+
+
+def getTrainData():
+    train_file = getAllDataFileName(DataType.train)
+    X_train = [];y_train = []
+    for gesture in train_file:
+        for data in getData(gesture):
+            X_train.append(data)
+            y_train.append(gesture)
+    return X_train, y_train
+
+
+def getTestData():
+    test_file = getAllDataFileName(DataType.test)
+    X_test = [];y_test = []
+    for gesture in test_file:
+        for data in getData(gesture):
+            X_test.append(data)
+            y_test.append(gesture)
+    return X_test, y_test
 
