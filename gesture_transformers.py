@@ -2,6 +2,8 @@ from sklearn.base import BaseEstimator, TransformerMixin
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing.data import StandardScaler
+import logging 
+logger = logging.getLogger(__name__)
 
 
 def removeNonNumeric(df):
@@ -12,10 +14,10 @@ def isNumeric(row):
     try:
         row.astype('float')
     except Exception as e:
-        print('--------------------NON-NUMERIC-DATA-ERROR--------------------')
-        print(row)
-        print(e)
-        print('-----------------------ERROR-ENDS-HERE------------------------')
+        logger.info('--------------------NON-NUMERIC-DATA-ERROR--------------------')
+        logger.info(row)
+        logger.info(e)
+        logger.info('-----------------------ERROR-ENDS-HERE------------------------')
         return False
     return True
 
@@ -53,7 +55,6 @@ class CoordinateNormalizer(BaseEstimator, TransformerMixin):
     def transform(self, X):
         tr = []
         for x in X:
-#             x = removeNonNumeric(x)
             first_row = x.iloc[0]
             tr.append(x.apply(lambda row: self.norm(row, first_row), axis=1))
         return tr
@@ -62,8 +63,8 @@ class CoordinateNormalizer(BaseEstimator, TransformerMixin):
         try:
             return row.astype('float') - first_row.astype('float')
         except Exception as e:
-            print(row)
-            print(e)
+            logger.error(row)
+            logger.error(e)
             return False
             
 # ----------------------- End Of Coordinate Normalizer -------------------
@@ -80,12 +81,12 @@ class AccelerometerNormalizer(BaseEstimator, TransformerMixin):
     def transform(self, X):
         tr = []
         for x in X:
-#             x = removeNonNumeric(x)
             tr.append(x.apply(lambda row: self.norm(row), axis=1))
         return tr
         
     def norm(self, row):
-        return np.sign(row.astype('float'))          
+        return row.astype('float')
+#         return np.sign(row.astype('float'))          
 
 # --------------------------End Of Accelerometer Normalizer---------------------
 
@@ -101,15 +102,15 @@ class AnalogVoltageScaler(BaseEstimator, TransformerMixin):
     def transform(self, X):
         tr = []
         for x in X:
-#             x = removeNonNumeric(x)
-            tr.append(self.minMaxNorm(x))
+            first_row = x.iloc[0]
+            tr.append(x.apply(lambda row: self.norm(row, first_row), axis=1))
         return tr
     
-    def minMaxNorm(self, df):
-        result = df.copy()
-        for feature_name in df.columns:
-            max_value = df[feature_name].max()
-            min_value = df[feature_name].min()
-            result[feature_name] = (df[feature_name] - min_value) / (max_value - min_value)
-        return result
+    def norm(self, row, first_row):
+        try:
+            return row.astype('float') - first_row.astype('float')
+        except Exception as e:
+            logger.error(row)
+            logger.error(e)
+            return False
     

@@ -12,7 +12,6 @@ class DTWClassifier(BaseEstimator, ClassifierMixin):
         """       
         self.neighbours = neighbours
         self.dist = dist
-        self._errors = []        
 
     def fit(self, X, y):
         self.X = X
@@ -35,11 +34,7 @@ class DTWClassifier(BaseEstimator, ClassifierMixin):
             res_indx = result.argsort()[:self.neighbours]
             pred.append(self.y[res_indx])
             err.append(result[res_indx])
-        self._errors = err
-        return pred
-    
-    def _error(self):
-        return self._errors
+        return pred, err
         
     def score(self, X, y=None):
         y_predict = self.predict(X)

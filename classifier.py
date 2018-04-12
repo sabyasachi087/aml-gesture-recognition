@@ -7,6 +7,11 @@ from gesture_transformers import CoordinateNormalizer, AccelerometerNormalizer, 
 from sklearn.pipeline import Pipeline
 from dtw_classifier import DTWClassifier
 import time 
+import sys
+
+if __name__ == "__main__":
+    from app_logger import setup_logging
+    setup_logging() 
 
 X_train, y_train = crt.getTrainData()
 
@@ -39,13 +44,16 @@ flex_predictor = flex_pipeline.fit(X_train, y_train)
 print('Estimators are ready in %f seconds' % (time.time() - start_time))
 
 X_test, y_test = crt.getTestData()
+tst_idx = np.random.randint(0, len(y_test))
+print('Testing the gesture >>>', y_test[tst_idx], '<<<')
+
 start_time = time.time()
-print(gyro_predictor.predict([X_test[0]]), y_test[0])
+print(gyro_predictor.predict([X_test[tst_idx]]))
 print('Gyro prediction completed in %f seconds' % (time.time() - start_time))
 start_time = time.time()
-print(acc_predictor.predict([X_test[0]]), y_test[0])
+print(acc_predictor.predict([X_test[tst_idx]]))
 print('Acc prediction completed in %f seconds' % (time.time() - start_time))
 start_time = time.time()
-print(flex_predictor.predict([X_test[0]]), y_test[0])
+print(flex_predictor.predict([X_test[tst_idx]]))
 print('Flex prediction completed in %f seconds' % (time.time() - start_time))
 
