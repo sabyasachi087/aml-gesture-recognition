@@ -10,7 +10,7 @@ class HandGestureDecider:
         """
         self.probability_threshold = pt
     
-    def probability(self, gestures, distances, prob_map):
+    def normalize(self, data):
         for indx in range(gestures):
             gest = gestures[indx]
             if gest in prob_map.keys():

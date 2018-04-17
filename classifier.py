@@ -19,41 +19,49 @@ gyro_attr_names = ["cord_x", "cord_y", "cord_z"]
 acc_attr_names = ["tilt_x", 'tilt_y', 'tilt_z']
 fgr_attr_names = ['thumb', 'index', 'middle', 'ring', 'little']
 
+all_pipelines = []
 gyro_pipeline = Pipeline([       
         ('selector', DataFrameSelector(gyro_attr_names)),
         ('cord_norm', CoordinateNormalizer()),
-        ('estimator', DTWClassifier(dist='euclidean')),
+        ('estimator', DTWClassifier(dist='euclidean', normalize=True)),
     ])
+all_pipelines.append(gyro_pipeline)
 
 acc_pipeline = Pipeline([       
         ('selector', DataFrameSelector(acc_attr_names)),
         ('acc_norm', AccelerometerNormalizer()),
-        ('estimator', DTWClassifier()),
+        ('estimator', DTWClassifier(normalize=True)),
     ])
+all_pipelines.append(acc_pipeline)
 
 flex_pipeline = Pipeline([       
         ('selector', DataFrameSelector(fgr_attr_names)),
         ('std_scaler', AnalogVoltageScaler()),
-        ('estimator', DTWClassifier()),
+        ('estimator', DTWClassifier(normalize=True)),
     ])
+all_pipelines.append(flex_pipeline)
 
 start_time = time.time()
-gyro_predictor = gyro_pipeline.fit(X_train, y_train)
-acc_predictor = acc_pipeline.fit(X_train, y_train)
-flex_predictor = flex_pipeline.fit(X_train, y_train)
+for pl in all_pipelines:
+    pl.fit(X_train, y_train)
 print('Estimators are ready in %f seconds' % (time.time() - start_time))
 
 X_test, y_test = crt.getTestData()
 tst_idx = np.random.randint(0, len(y_test))
+
+resultDf = pd.DataFrame(columns=['gesture', 'distance'])
+
 print('Testing the gesture >>>', y_test[tst_idx], '<<<')
+start_time = time.time()
+for pl in all_pipelines:
+    preds = pl.predict([X_test[tst_idx]])
+    for gesture, distance in preds:        
+        for idx in range(len(gesture)):
+            resultDf.loc[len(resultDf)] = [gesture[idx], distance[idx]]
 
-start_time = time.time()
-print(gyro_predictor.predict([X_test[tst_idx]]))
-print('Gyro prediction completed in %f seconds' % (time.time() - start_time))
-start_time = time.time()
-print(acc_predictor.predict([X_test[tst_idx]]))
-print('Acc prediction completed in %f seconds' % (time.time() - start_time))
-start_time = time.time()
-print(flex_predictor.predict([X_test[tst_idx]]))
-print('Flex prediction completed in %f seconds' % (time.time() - start_time))
-
+print('Prediction completed in %f seconds' % (time.time() - start_time))
+resultDf['distance'] = resultDf['distance'].apply(lambda x : (1 - x) / len(resultDf))
+resultDf = resultDf.groupby(['gesture'], as_index=False).sum()
+total_dist = resultDf['distance'].sum()
+resultDf['distance'] = resultDf['distance'].apply(lambda x : x / total_dist)
+print(resultDf)

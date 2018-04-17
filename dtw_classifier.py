@@ -2,16 +2,16 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from dtw import fastdtw
 import numpy as np
 
-
 class DTWClassifier(BaseEstimator, ClassifierMixin):  
 
-    def __init__(self, neighbours=3, dist='minkowski'):
+    def __init__(self, neighbours=5, dist='minkowski', normalize=False):
         """
         dist: Distance metrics - euclidean, minkowski
         neighbours: Nearest neighbours
         """       
         self.neighbours = neighbours
         self.dist = dist
+        self.normalize = normalize
 
     def fit(self, X, y):
         self.X = X
@@ -24,17 +24,27 @@ class DTWClassifier(BaseEstimator, ClassifierMixin):
             result = np.zeros(len(self.y))
             for id_train in range(len(self.X)):
                 try:
-                    min_dist = fastdtw(self.X[id_train], x_test[id_test], self.dist)
+                    min_dist = fastdtw(self.X[id_train], x_test[id_test], self.dist)                    
                     result[id_train] = min_dist
                 except Exception as e:
                     print(self.y[id_train]) 
                     print(self.X[id_train]) 
                     print(x_test[id_test])    
-                    print(e)       
+                    print(e)
+            if(self.normalize):
+                result = self.norm(result)       
             res_indx = result.argsort()[:self.neighbours]
-            pred.append(self.y[res_indx])
-            err.append(result[res_indx])
-        return pred, err
+            pred.append((self.y[res_indx], result[res_indx]))
+        return pred
+    
+    def norm(self, x):
+        max_x = np.max(x);min_x = np.min(x)
+        if (max_x - min_x) == 0:
+            print(x)
+            return np.ones(len(x))
+        else:
+            return (x - min_x) / (max_x - min_x)
+         
         
     def score(self, X, y=None):
         y_predict = self.predict(X)
