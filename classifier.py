@@ -64,4 +64,4 @@ resultDf['distance'] = resultDf['distance'].apply(lambda x : (1 - x) / len(resul
 resultDf = resultDf.groupby(['gesture'], as_index=False).sum()
 total_dist = resultDf['distance'].sum()
 resultDf['distance'] = resultDf['distance'].apply(lambda x : x / total_dist)
-print(resultDf)
+print(resultDf.ix[resultDf['distance'].idxmax()])
