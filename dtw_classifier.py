@@ -1,6 +1,7 @@
 from sklearn.base import BaseEstimator, ClassifierMixin
 from dtw import fastdtw
 import numpy as np
+import pandas as pd
 
 class DTWClassifier(BaseEstimator, ClassifierMixin):  
 
@@ -37,6 +38,19 @@ class DTWClassifier(BaseEstimator, ClassifierMixin):
             pred.append((self.y[res_indx], result[res_indx]))
         return pred
     
+    def _naive_bayes_prob(self, X_test):        
+        preds = self.predict([X_test])
+        resultDf = pd.DataFrame(columns=['gesture', 'distance'])
+        for gesture, distance in preds:        
+            for idx in range(len(gesture)):
+                resultDf.loc[len(resultDf)] = [gesture[idx], distance[idx]]
+        resultDf['distance'] = resultDf['distance'].apply(lambda x : (1 - x) / len(resultDf))
+        resultDf = resultDf.groupby(['gesture'], as_index=False).sum()
+        total_dist = resultDf['distance'].sum()
+        resultDf['distance'] = resultDf['distance'].apply(lambda x : x / total_dist)
+        gest_res = resultDf.ix[resultDf['distance'].idxmax()]
+        return (gest_res["gesture"], gest_res["distance"])
+    
     def norm(self, x):
         max_x = np.max(x);min_x = np.min(x)
         if (max_x - min_x) == 0:
@@ -44,12 +58,14 @@ class DTWClassifier(BaseEstimator, ClassifierMixin):
             return np.ones(len(x))
         else:
             return (x - min_x) / (max_x - min_x)
-         
         
-    def score(self, X, y=None):
-        y_predict = self.predict(X)
-        count = 0
-        for idx in range(len(y)):
-            if y[idx] == y_predict[idx][0]:
-                count += 1
-        return count / len(y)
+    def score(self, X, y):
+        score = [];preds = []
+        for _x in X:
+            preds.append(self._naive_bayes_prob(_x))
+        for indx in range(len(y)):
+            if y[indx] == preds[indx][0]:
+                score.append(preds[indx][1])
+            else:
+                score.append(0.)
+        return np.average(score)
