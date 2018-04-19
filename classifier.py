@@ -38,7 +38,7 @@ all_pipelines.append(acc_pipeline)
 flex_pipeline = Pipeline([       
         ('selector', DataFrameSelector(fgr_attr_names)),
         ('std_scaler', AnalogVoltageScaler()),
-        ('estimator', DTWClassifier(normalize=True)),
+        ('estimator', DTWClassifier(neighbours=1, normalize=True)),
     ])
 all_pipelines.append(flex_pipeline)
 
